@@ -11,8 +11,9 @@ import java.util.regex.Pattern;
 
 
 public class NowWidget extends WikiWidget {
-    public static final String REGEXP = "^!now .+?$";
+    public static final String REGEXP = "^!now.*?$";
 
+    private static final String DEFAULT_DATE_FORMAT = "MM/dd/yyyy";
     private static final Pattern PATTERN = Pattern.compile("pattern\\((.+?)\\)");
     private static final Pattern MONTH = Pattern.compile("month\\((.+?)\\)");
     private static final Pattern DAY = Pattern.compile("day\\((.+?)\\)");
@@ -26,21 +27,58 @@ public class NowWidget extends WikiWidget {
         this.input = input;
     }
 
-    @Override
     public String render() throws Exception {
-        String datePattern = string(PATTERN, input);
-        if (datePattern == null) {
-            StringBuilder error = new StringBuilder();
-            error.append(input).append(HtmlUtil.BRtag).append("Bad syntax!").append(HtmlUtil.BRtag);
-            error.append("Options:").append(HtmlUtil.BRtag).append("<ul>");
-            error.append("</ul>");
-            return HtmlUtil.metaText(error.toString());
+        String datePattern = DEFAULT_DATE_FORMAT;
+
+        if (hasPattern(input)) {
+            datePattern = string(PATTERN, input);
+            if (datePattern == null) {
+                return badSyntax();
+            }
         }
+
+        int months = toInt(MONTH, input);
+        if (months == 0 && hasMonth(input)) {
+            return badSyntax();
+        }
+        int days = toInt(DAY, input);
+        if (days == 0 && hasDay(input)) {
+            return badSyntax();
+        }
+        int years = toInt(YEAR, input);
+        if (years == 0 && hasYear(input)) {
+            return badSyntax();
+        }
+
+
+        calender.add(Calendar.MONTH, months);
+        calender.add(Calendar.DAY_OF_YEAR, days);
+        calender.add(Calendar.YEAR, years);
+
         SimpleDateFormat formatter = new SimpleDateFormat(datePattern);
-        calender.add(Calendar.MONTH, toInt(MONTH, input));
-        calender.add(Calendar.DAY_OF_YEAR, toInt(DAY, input));
-        calender.add(Calendar.YEAR, toInt(YEAR, input));
         return formatter.format(calender.getTime());
+    }
+
+    private boolean hasYear(String input) {
+        return input.contains("year");
+    }
+    
+    private boolean hasDay(String input) {
+        return input.contains("day");
+    }
+
+    private boolean hasMonth(String input) {
+        return input.contains("month");
+    }
+
+    private String badSyntax() {
+        StringBuilder error = new StringBuilder();
+        error.append(input).append(HtmlUtil.BRtag).append("Bad syntax!").append(HtmlUtil.BRtag);
+        return HtmlUtil.metaText(error.toString());
+    }
+
+    private boolean hasPattern(String input) {
+        return input.contains("pattern");
     }
 
     private int toInt(Pattern pattern, String input) {
@@ -59,4 +97,5 @@ public class NowWidget extends WikiWidget {
     protected void setCalender(Calendar calender) {
         this.calender = calender;
     }
+
 }
