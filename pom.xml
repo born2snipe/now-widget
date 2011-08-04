@@ -4,7 +4,7 @@
     <groupId>b2s</groupId>
     <artifactId>now-widget</artifactId>
     <packaging>jar</packaging>
-    <version>0.2</version>
+    <version>0.2-SNAPSHOT</version>
     <name>now-widget</name>
 
     <dependencies>
