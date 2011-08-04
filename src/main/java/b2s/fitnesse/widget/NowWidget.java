@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 
 
 public class NowWidget extends WikiWidget {
-    public static final String REGEXP = "^!now.*?$";
+    public static final String REGEXP = "!now( (pattern|day|month|year)\\(.*?\\))*";
 
     private static final String DEFAULT_DATE_FORMAT = "MM/dd/yyyy";
     private static final Pattern PATTERN = Pattern.compile("pattern\\((.+?)\\)");
@@ -33,7 +33,7 @@ public class NowWidget extends WikiWidget {
     private static final Pattern YEAR = Pattern.compile("year\\((.+?)\\)");
 
     private final String input;
-    private Calendar calender = Calendar.getInstance();
+    private CalendarFactory calenderFactory = new CalendarFactory();
 
     public NowWidget(ParentWidget parent, String input) {
         super(parent);
@@ -63,13 +63,13 @@ public class NowWidget extends WikiWidget {
             return badSyntax();
         }
 
-
-        calender.add(Calendar.MONTH, months);
-        calender.add(Calendar.DAY_OF_YEAR, days);
-        calender.add(Calendar.YEAR, years);
+        Calendar calendar = calenderFactory.build();
+        calendar.add(Calendar.MONTH, months);
+        calendar.add(Calendar.DAY_OF_YEAR, days);
+        calendar.add(Calendar.YEAR, years);
 
         SimpleDateFormat formatter = new SimpleDateFormat(datePattern);
-        return formatter.format(calender.getTime());
+        return formatter.format(calendar.getTime());
     }
 
     private boolean hasYear(String input) {
@@ -107,8 +107,13 @@ public class NowWidget extends WikiWidget {
         return null;
     }
 
-    protected void setCalender(Calendar calender) {
-        this.calender = calender;
+    protected void setCalenderFactory(CalendarFactory calendarFactory) {
+        this.calenderFactory = calendarFactory;
     }
 
+    public static class CalendarFactory {
+        public Calendar build() {
+            return Calendar.getInstance();
+        }
+    }
 }

@@ -15,7 +15,6 @@ package b2s.fitnesse.widget;
 
 import fitnesse.html.HtmlUtil;
 import fitnesse.wikitext.widgets.WidgetTestCase;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -63,31 +62,53 @@ public class NowWidgetTest extends WidgetTestCase {
     public void test_addMonth() throws Exception {
         assertEquals("02/01/2000", widget("!now pattern(MM/dd/yyyy) month(1)", "01/01/2000").render());
     }
+
+    public void test_subtractMonth() throws Exception {
+        assertEquals("2000", widget("!now month(-6) pattern(yyyy)", "07/01/2000").render());
+    }
     
     public void test_onlyPattern() throws Exception {
         assertEquals("01/01/2000", widget("!now pattern(MM/dd/yyyy)", "01/01/2000").render());
     }
 
+    public void test_callRenderMultipleTimesWithDateManipulation() throws Exception {
+        NowWidget widget = widget("!now pattern(yyyy) month(6)", "01/01/2000");
+        assertEquals("2000", widget.render());
+        assertEquals("2000", widget.render());
+    }
+
     public void test_pattern() {
         assertMatch("!now");
-        assertNoMatch(" !now pattern(MM/dd/yyyy)");
         assertMatch("!now pattern(MM/dd/yyyy)");
+        assertMatch("!now year(10)");
+        assertMatch("!now month(10)");
+        assertMatch("!now day(10)");
+        assertMatchEquals(" !now pattern(MM/dd/yyyy)", "!now pattern(MM/dd/yyyy)");
         assertMatchEquals("!now pattern(MM/dd/yyyy)\nnext-line", "!now pattern(MM/dd/yyyy)");
+        assertMatchEquals("!define year1 {!now pattern(yyyy)}", "!now pattern(yyyy)");
+        assertMatchEquals("!define year1 [!now pattern(yyyy)]", "!now pattern(yyyy)");
+        assertMatchEquals("!define year1 (!now pattern(yyyy))", "!now pattern(yyyy)");
     }
 
     protected String getRegexp() {
         return NowWidget.REGEXP;
     }
 
-    private NowWidget widget(String widgetPattern, String datePattern) {
-        Calendar calendar = Calendar.getInstance();
+    private NowWidget widget(String widgetPattern, final String datePattern) {
         NowWidget widget = new NowWidget(null, widgetPattern);
-        widget.setCalender(calendar);
-        try {
-            calendar.setTime(FORMATTER.parse(datePattern));
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
+        widget.setCalenderFactory(new NowWidget.CalendarFactory() {
+            @Override
+            public Calendar build() {
+                Calendar calendar = Calendar.getInstance();
+                try {
+                    calendar.setTime(FORMATTER.parse(datePattern));
+                }
+                catch (ParseException e) {
+                    throw new RuntimeException(e);
+                }
+                return calendar;
+            }
+        });
         return widget;
     }
 }
